@@ -118,11 +118,83 @@ export class Gauntlet {
         for (const k of missing) sockets[k] = this.sockets[k];
       }
       this._setModel(wrapper, sockets);
+      this.isCustom = true;
       return true;
     } catch (err) {
       console.warn('[gauntlet] Could not load custom model, using the procedural gauntlet.', err);
       return false;
     }
+  }
+
+  // Gem mounts for a custom model: a recessed dark cup, a gold bezel rim shaped
+  // to each stone's oval, and four claws. `stoneModels` (from loadStoneModels)
+  // gives each gem's size so the mount fits it; missing ones use a default oval.
+  addSocketMounts(stoneModels) {
+    if (!this.isCustom || this._mounts) return;
+    const { socket: cupMat } = getGauntletMaterials();
+    const rimMat = enhanceMaterial(
+      new THREE.MeshPhysicalMaterial({
+        color: new THREE.Color('#c8923f'),
+        metalness: 0.9,
+        roughness: 0.33,
+        clearcoat: 0.4,
+        clearcoatRoughness: 0.2,
+        envMapIntensity: 1.0,
+      })
+    );
+    const Z = new THREE.Vector3(0, 0, 1);
+    this._mounts = new THREE.Group();
+    this._mounts.name = 'socket-mounts';
+    for (const [id, sk] of Object.entries(this.sockets)) {
+      const size = stoneModels?.[id]?.coreSize ?? new THREE.Vector3(2, 1.64, 1.24);
+      const r = sk.radius;
+      const a = (size.x / 2) * r; // gem half-width
+      const b = (size.y / 2) * r; // gem half-height
+      const d = (size.z / 2) * r; // gem half-depth
+      const tube = Math.min(a, b) * 0.21;
+      const m = new THREE.Group();
+      m.position.copy(sk.position);
+      m.quaternion.setFromUnitVectors(Z, sk.normal);
+
+      // Dark cup the gem sinks into.
+      const cupGeo = new THREE.CylinderGeometry(1, 0.86, 1, 48, 1, false);
+      cupGeo.rotateX(Math.PI / 2);
+      const cup = new THREE.Mesh(cupGeo, cupMat);
+      cup.scale.set(a * 1.06, b * 1.06, d * 1.3);
+      cup.position.z = -d * 0.75;
+      m.add(cup);
+
+      // Bezel rim: an elliptical tube of even thickness.
+      const pts = [];
+      for (let i = 0; i < 64; i++) {
+        const t = (i / 64) * Math.PI * 2;
+        pts.push(new THREE.Vector3(Math.cos(t) * (a + tube * 0.9), Math.sin(t) * (b + tube * 0.9), -d * 0.12));
+      }
+      const rim = new THREE.Mesh(
+        new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, true), 96, tube, 12, true),
+        rimMat
+      );
+      m.add(rim);
+
+      // Four claws leaning over the gem's edge.
+      const clawGeo = new THREE.SphereGeometry(1, 14, 10);
+      for (const t of [Math.PI / 4, (3 * Math.PI) / 4, (5 * Math.PI) / 4, (7 * Math.PI) / 4]) {
+        const claw = new THREE.Mesh(clawGeo, rimMat);
+        claw.position.set(Math.cos(t) * a * 0.92, Math.sin(t) * b * 0.92, d * 0.2);
+        claw.scale.set(tube * 1.1, tube * 1.1, tube * 1.9);
+        // Point the long axis back into the setting (local space; lookAt would use world space).
+        claw.quaternion.setFromUnitVectors(Z, new THREE.Vector3(0, 0, -d).sub(claw.position).normalize());
+        m.add(claw);
+      }
+      m.traverse((o) => {
+        if (o.isMesh) {
+          o.userData.gauntletPart = true;
+          this.meshes.push(o);
+        }
+      });
+      this._mounts.add(m);
+    }
+    this.root.add(this._mounts);
   }
 
   socketWorldPosition(id, target = new THREE.Vector3()) {
