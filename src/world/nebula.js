@@ -49,7 +49,7 @@ export class Nebula {
 
           // Domain warp — gentle normally, liquid under the Reality Stone.
           vec3 q = d * 1.7;
-          float warpAmt = 0.4 + uReality * 1.5 + uMind * 0.4;
+          float warpAmt = 0.4 + uReality * 1.5 + uMind * 0.25;
           vec3 w = vec3(fbm2(q + vec3(t, 0.0, 0.0)), fbm2(q + vec3(5.2, 1.3, -t)), fbm2(q + vec3(2.1, t * 1.3, 7.7)));
           w += uReality * vec3(sin(uTime * 0.6 + d.y * 4.0), cos(uTime * 0.5 + d.x * 3.0), 0.0) * 0.35;
           vec3 p = q + w * warpAmt;
@@ -81,7 +81,7 @@ export class Nebula {
 
           // Mind: golden interference bands.
           float bands = pow(0.5 + 0.5 * sin(n1 * 10.0 + uTime * 1.4), 12.0);
-          col += vec3(0.9, 0.62, 0.08) * bands * uMind * 0.22 * (0.4 + behind);
+          col += vec3(0.9, 0.62, 0.08) * bands * uMind * 0.12 * (0.4 + behind);
           col = mix(col, col * vec3(1.15, 1.0, 0.7), uMind * 0.4);
 
           // Reality: a crimson liquid sky.

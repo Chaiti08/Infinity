@@ -68,7 +68,7 @@ export function enhanceMaterial(material, opts = {}) {
         }
         if (uDissolve > 0.0) {
           float edge = 1.0 - smoothstep(0.0, 0.06, dField - dCut);
-          totalEmissiveRadiance += uEdgeColor * edge * 2.5;
+          totalEmissiveRadiance += uEdgeColor * edge * 1.4;
         }`
       );
   };

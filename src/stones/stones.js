@@ -96,7 +96,10 @@ class Stone {
     group.add(this.hitMesh);
 
     if (quality.stoneLights) {
+      // Sits a little in front of the gem (local units scale with the stone)
+      // so a socketed stone lights the metal around it without hot spots.
       this.light = new THREE.PointLight(this.color, 0, 3.2, 1.8);
+      this.light.position.z = 3;
       group.add(this.light);
     }
 
@@ -108,8 +111,9 @@ class Stone {
 }
 
 export class Stones {
-  constructor(scene, gauntlet, quality) {
+  constructor(scene, gauntlet, quality, stage) {
     this.scene = scene;
+    this.stage = stage;
     this.gauntlet = gauntlet;
     this.ringAngle = 0;
     this.ringCenter = new THREE.Vector3(0, 0.05, 0);
@@ -139,7 +143,7 @@ export class Stones {
 
   orbitPosition(stone, out) {
     const a = this.ringAngle + (stone.index / this.list.length) * Math.PI * 2;
-    const r = this.ringRadius;
+    const r = this.stage?.ringRadius ?? this.ringRadius;
     out.set(Math.sin(a) * r, 0, Math.cos(a) * r * 0.92);
     // Tilt the ring so stones dip in front and rise behind.
     const y = -Math.cos(a) * r * Math.sin(this.ringTilt) * 0.55;
@@ -281,7 +285,7 @@ export class Stones {
       s.coreMat.color.copy(s.color).multiplyScalar((2.6 + s.hover * 1.5 + s.pulse * 6) * shimmer);
       s.haloMat.opacity = (socketed ? 0.75 : 0.5) * vis + s.hover * 0.3 + s.pulse * 0.6;
       s.halo.scale.setScalar(socketed ? 3.4 + s.pulse * 4 : 4.2 + s.hover * 1.2);
-      if (s.light) s.light.intensity = (socketed ? 2.2 : 0.7) * vis + s.pulse * 6;
+      if (s.light) s.light.intensity = (socketed ? 0.7 : 0.5) * vis + s.pulse * 3;
     }
   }
 }

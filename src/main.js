@@ -77,7 +77,7 @@ async function boot() {
   ui.loaderProgress(0.35, 'Gathering the stones');
   await nextFrame();
 
-  const stones = new Stones(scene, gauntlet, quality);
+  const stones = new Stones(scene, gauntlet, quality, stage);
   const nebula = new Nebula(bgScene, quality);
   const stars = new Stars(scene, quality);
   const dust = new Dust(scene, quality);

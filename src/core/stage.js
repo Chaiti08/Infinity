@@ -95,7 +95,7 @@ export class Stage {
 
     // Stone-coloured glow light at the gauntlet, driven by the director.
     this.glowLight = new THREE.PointLight(0xffffff, 0, 12, 1.2);
-    this.glowLight.position.set(0, 1.0, 3.0);
+    this.glowLight.position.set(0, 1.8, 4.2);
     s.add(this.glowLight);
 
     this.lights = { key, rim, rim2 };
@@ -145,10 +145,13 @@ export class Stage {
     this.renderer.setSize(w, h);
     this.camera.aspect = w / h;
 
-    // Fit the gauntlet plus its orbiting ring of stones on any aspect ratio.
+    // Fit the gauntlet plus its orbiting ring of stones on any aspect ratio;
+    // on narrow (portrait) screens the ring tightens so the gauntlet stays big.
+    const aspect = this.camera.aspect;
+    this.ringRadius = aspect < 0.75 ? 2.3 : aspect < 1.1 ? 2.85 : 3.45;
     const tanHalf = Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2));
-    const halfH = 3.5;
-    const halfW = 4.3;
+    const halfH = 3.3;
+    const halfW = this.ringRadius + 0.85;
     const dist = Math.max(halfH / tanHalf, halfW / (tanHalf * this.camera.aspect));
     this.fitDistance = dist;
     this.controls.minDistance = dist * 0.62;

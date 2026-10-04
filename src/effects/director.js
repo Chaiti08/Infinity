@@ -498,7 +498,7 @@ export class Director {
     c.gauntlet.setGlow(glow, strength);
     sharedUniforms.uDissolve.value = this.dissolve;
     c.stage.glowLight.color.copy(glow);
-    c.stage.glowLight.intensity = (0.6 + this.insertedIds.length * 0.3 + maxBig * 2.5 + this.ultimateGlow * 1.2) * (1 - this.dim);
+    c.stage.glowLight.intensity = (0.8 + this.insertedIds.length * 0.35 + maxBig * 2.0 + this.ultimateGlow * 1.2) * (1 - this.dim);
 
     // stones fade out with the dissolve
     if (this.phase === 'snap') {
