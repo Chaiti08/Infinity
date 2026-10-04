@@ -1,5 +1,7 @@
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { STONES } from '../data/stones.js';
+import { MODEL_CONFIG } from '../gauntlet/modelConfig.js';
 
 const Z_AXIS = new THREE.Vector3(0, 0, 1);
 const ORBIT_SCALE = 0.25;
@@ -28,10 +30,33 @@ function gemGeometry() {
   return g;
 }
 
+// Loads stones.glb (see modelConfig.js): per stone id, the gem geometry,
+// centred on the origin and sized so the gem is roughly 2 units across (the same footprint as the procedural gem). Resolves to null
+// if the file is missing, in which case the procedural gems are used.
+export async function loadStoneModels() {
+  const url = MODEL_CONFIG.stonesUrl;
+  if (!url) return null;
+  try {
+    const gltf = await new GLTFLoader().loadAsync(url);
+    const out = {};
+    for (const def of STONES) {
+      const core = gltf.scene.getObjectByName(`${def.id}_core`);
+      if (!core?.geometry) continue;
+      const cb = new THREE.Box3().setFromBufferAttribute(core.geometry.attributes.position);
+      const coreSize = cb.getSize(new THREE.Vector3());
+      out[def.id] = { coreGeo: core.geometry, coreSize };
+    }
+    return Object.keys(out).length ? out : null;
+  } catch (err) {
+    console.warn('[stones] Could not load stones.glb, using the procedural stones.', err);
+    return null;
+  }
+}
+
 const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
 class Stone {
-  constructor(def, index, shared, quality) {
+  constructor(def, index, shared, quality, model) {
     this.def = def;
     this.id = def.id;
     this.index = index;
@@ -60,7 +85,7 @@ class Stone {
       envMapIntensity: 2.2,
       specularIntensity: 1,
     });
-    this.shell = new THREE.Mesh(shared.gemGeo, this.shellMat);
+    this.shell = new THREE.Mesh(model ? model.coreGeo : shared.gemGeo, this.shellMat);
     group.add(this.shell);
 
     this.coreMat = new THREE.MeshBasicMaterial({
@@ -70,7 +95,8 @@ class Stone {
       blending: THREE.AdditiveBlending,
     });
     this.core = new THREE.Mesh(shared.coreGeo, this.coreMat);
-    this.core.scale.setScalar(0.6);
+    if (model) this.core.scale.copy(model.coreSize).multiplyScalar(0.3);
+    else this.core.scale.setScalar(0.6);
     group.add(this.core);
 
     this.haloMat = new THREE.SpriteMaterial({
@@ -111,7 +137,7 @@ class Stone {
 }
 
 export class Stones {
-  constructor(scene, gauntlet, quality, stage) {
+  constructor(scene, gauntlet, quality, stage, models = null) {
     this.scene = scene;
     this.stage = stage;
     this.gauntlet = gauntlet;
@@ -126,7 +152,7 @@ export class Stones {
       hitGeo: new THREE.SphereGeometry(1, 12, 8),
       halo: haloTexture(),
     };
-    this.list = STONES.map((def, i) => new Stone(def, i, shared, quality));
+    this.list = STONES.map((def, i) => new Stone(def, i, shared, quality, models?.[def.id]));
     this.byId = Object.fromEntries(this.list.map((s) => [s.id, s]));
     this.hitMeshes = this.list.map((s) => s.hitMesh);
     for (const s of this.list) {

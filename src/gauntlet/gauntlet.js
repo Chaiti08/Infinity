@@ -59,11 +59,28 @@ export class Gauntlet {
         if (cfg.useGoldMaterial) o.material = gold;
         else {
           o.material = o.material.clone();
+          o.material.metalness = cfg.metalness ?? o.material.metalness;
+          o.material.roughness = cfg.roughness ?? o.material.roughness;
+          o.material.envMapIntensity = cfg.envMapIntensity ?? o.material.envMapIntensity;
           enhanceMaterial(o.material);
         }
       });
 
+      // Socket markers authored in Blender: Socket_<id> = stone centre,
+      // SocketN_<id> = centre + normal * stone radius.
+      model.updateMatrixWorld(true);
+      const markers = {};
+      model.traverse((o) => {
+        const m = /^(Socket|SocketN)_(\w+)$/.exec(o.name);
+        if (m) (markers[m[2]] ||= {})[m[1]] = o.getWorldPosition(new THREE.Vector3());
+      });
+
       const sockets = {};
+      for (const [id, mk] of Object.entries(markers)) {
+        if (!mk.Socket || !mk.SocketN) continue;
+        const d = mk.SocketN.clone().sub(mk.Socket);
+        sockets[id] = { position: mk.Socket.clone(), normal: d.clone().normalize(), radius: d.length() };
+      }
       for (const [id, sk] of Object.entries(cfg.sockets)) {
         sockets[id] = {
           position: new THREE.Vector3(...sk.position),
@@ -73,7 +90,7 @@ export class Gauntlet {
       }
       const missing = ['soul', 'reality', 'space', 'power', 'time', 'mind'].filter((k) => !sockets[k]);
       if (missing.length) {
-        console.warn(`[gauntlet] Custom model has no sockets for: ${missing.join(', ')}. Using procedural positions for those — run with ?calibrate to place them.`);
+        console.warn(`[gauntlet] Custom model has no sockets for: ${missing.join(', ')}. Using procedural positions for those.`);
         for (const k of missing) sockets[k] = this.sockets[k];
       }
       this._setModel(wrapper, sockets);
