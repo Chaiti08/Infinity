@@ -142,10 +142,10 @@ function makeParticles(kind, color, count) {
         vec3 d = normalize(s.xyz * 2.0 - 1.0 + 0.001);
         if (uKind < 0.5) {            // reality: smoke swirling around the gem
           float ang = s.z * 6.2832 + t * (0.2 + 0.35 * s.y) * (s.w > 0.5 ? 1.0 : -1.0);
-          float rad = 0.95 + 1.2 * life;
-          p = vec3(cos(ang) * rad, sin(ang) * rad * 0.85, (s.w - 0.5) * 0.8);
-          size = 0.9 + 1.4 * s.y;
-          a = env * 0.26;
+          float rad = 0.9 + 0.9 * life;
+          p = vec3(cos(ang) * rad, sin(ang) * rad * 0.85, (s.w - 0.5) * 0.6);
+          size = 0.35 + 0.5 * s.y;
+          a = env * 0.16;
         } else if (uKind < 1.5) {     // space: stars drifting inside
           float r = pow(s.w, 0.6) * 0.8;
           float ang = t * 0.18;

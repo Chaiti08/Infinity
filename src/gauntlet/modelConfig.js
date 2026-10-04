@@ -13,10 +13,12 @@
 // ids: space, mind, reality, power, time, soul.
 
 const base = import.meta.env.BASE_URL;
+// Cache-buster: model files keep their names, so tag them with the build id.
+const v = typeof __BUILD_ID__ !== 'undefined' ? `?v=${__BUILD_ID__}` : '';
 
 export const MODEL_CONFIG = {
-  url: `${base}models/gauntlet.glb`,
-  stonesUrl: `${base}models/stones.glb`,
+  url: `${base}models/gauntlet.glb${v}`,
+  stonesUrl: `${base}models/stones.glb${v}`,
 
   // The model is auto-scaled to this height and stood on the cuff's base.
   height: 4.0,
