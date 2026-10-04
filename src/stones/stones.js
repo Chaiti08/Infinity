@@ -2,26 +2,10 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { STONES } from '../data/stones.js';
 import { MODEL_CONFIG } from '../gauntlet/modelConfig.js';
+import { StoneGlow, makeGemMaterial } from './stoneGlow.js';
 
 const Z_AXIS = new THREE.Vector3(0, 0, 1);
 const ORBIT_SCALE = 0.25;
-
-function haloTexture() {
-  const s = 128;
-  const c = document.createElement('canvas');
-  c.width = c.height = s;
-  const g = c.getContext('2d');
-  const grad = g.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
-  grad.addColorStop(0, 'rgba(255,255,255,1)');
-  grad.addColorStop(0.18, 'rgba(255,255,255,0.55)');
-  grad.addColorStop(0.45, 'rgba(255,255,255,0.12)');
-  grad.addColorStop(1, 'rgba(255,255,255,0)');
-  g.fillStyle = grad;
-  g.fillRect(0, 0, s, s);
-  const t = new THREE.CanvasTexture(c);
-  t.colorSpace = THREE.SRGBColorSpace;
-  return t;
-}
 
 // Polished oval cabochon, flatter along Z (the axis that faces out of a socket).
 function gemGeometry() {
@@ -72,44 +56,13 @@ class Stone {
     group.name = `stone-${def.id}`;
     this.group = group;
 
-    this.shellMat = new THREE.MeshPhysicalMaterial({
-      color: this.color.clone().multiplyScalar(0.9),
-      emissive: this.color.clone(),
-      emissiveIntensity: 0.55,
-      metalness: 0.05,
-      roughness: 0.04,
-      clearcoat: 1,
-      clearcoatRoughness: 0.02,
-      transparent: true,
-      opacity: 0.82,
-      envMapIntensity: 2.2,
-      specularIntensity: 1,
-    });
-    this.shell = new THREE.Mesh(model ? model.coreGeo : shared.gemGeo, this.shellMat);
+    // Glassy gem that glows from inside, plus the layered glow (see stoneGlow.js).
+    this.gemMat = makeGemMaterial(this.color, index * 7.31);
+    this.shell = new THREE.Mesh(model ? model.coreGeo : shared.gemGeo, this.gemMat);
     group.add(this.shell);
 
-    this.coreMat = new THREE.MeshBasicMaterial({
-      color: this.color.clone().multiplyScalar(3.2),
-      transparent: true,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-    });
-    this.core = new THREE.Mesh(shared.coreGeo, this.coreMat);
-    if (model) this.core.scale.copy(model.coreSize).multiplyScalar(0.3);
-    else this.core.scale.setScalar(0.6);
-    group.add(this.core);
-
-    this.haloMat = new THREE.SpriteMaterial({
-      map: shared.halo,
-      color: this.color.clone().multiplyScalar(1.4),
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      transparent: true,
-      opacity: 0.6,
-    });
-    this.halo = new THREE.Sprite(this.haloMat);
-    this.halo.scale.setScalar(4.2);
-    group.add(this.halo);
+    this.glow = new StoneGlow(def, this.color, quality, index * 7.31);
+    group.add(this.glow.group);
 
     // Invisible, generous hit target (bigger on touch screens).
     const coarse = matchMedia('(pointer: coarse)').matches;
@@ -140,6 +93,7 @@ export class Stones {
   constructor(scene, gauntlet, quality, stage, models = null) {
     this.scene = scene;
     this.stage = stage;
+    this.maxDpr = quality.maxDpr ?? 2;
     this.gauntlet = gauntlet;
     this.ringAngle = 0;
     this.ringCenter = new THREE.Vector3(0, 0.05, 0);
@@ -150,7 +104,6 @@ export class Stones {
       gemGeo: gemGeometry(),
       coreGeo: new THREE.SphereGeometry(1, 20, 14).scale(0.9, 0.75, 0.55),
       hitGeo: new THREE.SphereGeometry(1, 12, 8),
-      halo: haloTexture(),
     };
     this.list = STONES.map((def, i) => new Stone(def, i, shared, quality, models?.[def.id]));
     this.byId = Object.fromEntries(this.list.map((s) => [s.id, s]));
@@ -306,11 +259,17 @@ export class Stones {
       s.group.visible = vis > 0.001;
 
       const socketed = s.mode === 'socket';
-      const shimmer = 0.85 + Math.sin(simTime * 3 + s.index) * 0.15;
-      s.shellMat.emissiveIntensity = 0.5 + s.hover * 0.5 + s.pulse * 2;
-      s.coreMat.color.copy(s.color).multiplyScalar((2.6 + s.hover * 1.5 + s.pulse * 6) * shimmer);
-      s.haloMat.opacity = (socketed ? 0.75 : 0.5) * vis + s.hover * 0.3 + s.pulse * 0.6;
-      s.halo.scale.setScalar(socketed ? 3.4 + s.pulse * 4 : 4.2 + s.hover * 1.2);
+      const boost = 0.9 + s.hover * 0.4 + s.pulse * 2.2;
+      s.gemMat.uniforms.uTime.value = simTime;
+      s.gemMat.uniforms.uBoost.value = boost;
+      s.glow.update({
+        time: simTime,
+        boost,
+        calm: socketed ? 0.55 : 1,
+        vis,
+        worldScale: s.group.scale.x,
+        viewH: innerHeight * Math.min(devicePixelRatio || 1, this.maxDpr),
+      });
       if (s.light) s.light.intensity = (socketed ? 0.7 : 0.5) * vis + s.pulse * 3;
     }
   }
