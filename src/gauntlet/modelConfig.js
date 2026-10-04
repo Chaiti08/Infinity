@@ -1,28 +1,38 @@
-// Use your own gauntlet model (for example a CC-licensed one from Sketchfab).
+// The site uses two Blender-exported models (see public/models/):
 //
-// 1. Download it as glTF Binary (.glb) and save it as public/models/gauntlet.glb
-// 2. Set `url` below to 'models/gauntlet.glb'
-// 3. Run the site with ?calibrate in the URL and click on the model where each
-//    stone should sit — the console prints a ready-to-paste socket entry.
-// 4. Paste the six entries into `sockets`.
+//   gauntlet.glb  the gauntlet with empty gem sockets. It also carries six
+//                 pairs of marker nodes, `Socket_<id>` (where a stone sits)
+//                 and `SocketN_<id>` (offset along the socket normal by the
+//                 stone radius). The loader reads them, so no manual
+//                 calibration is needed.
+//   stones.glb    six groups, `Stone_<id>`, each holding `<id>_core`
+//                 (the gem, centred on the origin).
 //
-// While `url` is null (or the file fails to load) the built-in procedural
-// gauntlet is used, which already has all six sockets.
+// Set `url` / `stonesUrl` to null to fall back to the built-in procedural
+// gauntlet and stones. If a model fails to load, the procedural one is used.
+// ids: space, mind, reality, power, time, soul.
+
+const base = import.meta.env.BASE_URL;
 
 export const MODEL_CONFIG = {
-  url: null,
+  url: `${base}models/gauntlet.glb`,
+  stonesUrl: `${base}models/stones.glb`,
 
   // The model is auto-scaled to this height and stood on the cuff's base.
   height: 4.0,
   // Extra rotation (radians) if the model faces the wrong way: back of hand → +Z.
   rotation: [0, 0, 0],
-  // Replace the model's own materials with the tinted gold (recommended when
-  // the source materials look flat or untextured).
+  // Replace the model's own materials with the built-in tinted gold.
+  // false keeps the model's baked texture and makes it metallic (see below).
   useGoldMaterial: false,
+  // Used when useGoldMaterial is false.
+  metalness: 0.45,
+  roughness: 0.5,
+  envMapIntensity: 2.2,
 
-  // Socket positions in the normalised model space printed by ?calibrate.
+  // Optional manual socket overrides (normalised model space, printed by
+  // ?calibrate). Anything missing is read from the model's Socket_* markers.
   sockets: {
-    // soul:    { position: [x, y, z], normal: [x, y, z], radius: 0.1 },
-    // reality: { ... }, space: { ... }, power: { ... }, time: { ... }, mind: { ... },
+    // soul: { position: [x, y, z], normal: [x, y, z], radius: 0.1 },
   },
 };

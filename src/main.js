@@ -4,7 +4,7 @@ import { detectQuality, prefersReducedMotion } from './core/quality.js';
 import { Stage } from './core/stage.js';
 import { Post } from './core/post.js';
 import { Gauntlet } from './gauntlet/gauntlet.js';
-import { Stones } from './stones/stones.js';
+import { Stones, loadStoneModels } from './stones/stones.js';
 import { Nebula } from './world/nebula.js';
 import { Stars } from './world/stars.js';
 import { Dust } from './world/dust.js';
@@ -77,7 +77,8 @@ async function boot() {
   ui.loaderProgress(0.35, 'Gathering the stones');
   await nextFrame();
 
-  const stones = new Stones(scene, gauntlet, quality, stage);
+  const stoneModels = await loadStoneModels();
+  const stones = new Stones(scene, gauntlet, quality, stage, stoneModels);
   const nebula = new Nebula(bgScene, quality);
   const stars = new Stars(scene, quality);
   const dust = new Dust(scene, quality);

@@ -8,18 +8,26 @@ around it changes. Collect all six for the finale, then snap.
 
 ## The stones
 
-| Stone   | Socket       | What happens                                                                    | What stays afterwards                      |
-| ------- | ------------ | ------------------------------------------------------------------------------- | ------------------------------------------ |
-| Space   | middle knuckle | Hyperspace jump: the stars stretch into light, then a blue portal opens         | A faint portal and blue-shifted sky        |
-| Mind    | back of hand | A psychic wave: the screen ripples, the camera sways, the cursor leaves a gold trail | Gentle sway and golden interference        |
-| Reality | ring knuckle | Reality glitches: the screen tears, the sky turns to red liquid, Aether tendrils coil | A red-tinted sky and drifting Aether       |
-| Power   | index knuckle | A shockwave of force: screen shake, purple storm, sparks                        | Purple energy crackling over the metal     |
-| Time    | thumb        | Time stops: particles, lightning and orbit freeze inside green rune rings, then rewind | The whole world runs at half speed         |
-| Soul    | pinky knuckle | The Soul World: an amber sky over a calm, mirror-like sea                       | The sea stays beneath the gauntlet         |
+| Stone   | What happens                                                                    | What stays afterwards                      |
+| ------- | ------------------------------------------------------------------------------- | ------------------------------------------ |
+| Space   | Hyperspace jump: the stars stretch into light, then a blue portal opens         | A faint portal and blue-shifted sky        |
+| Mind    | A psychic wave: the screen ripples, the camera sways, the cursor leaves a gold trail | Gentle sway and golden interference        |
+| Reality | Reality glitches: the screen tears, the sky turns to red liquid, Aether tendrils coil | A red-tinted sky and drifting Aether       |
+| Power   | A shockwave of force: screen shake, purple storm, sparks                        | Purple energy crackling over the metal     |
+| Time    | Time stops: particles, lightning and orbit freeze inside green rune rings, then rewind | The whole world runs at half speed         |
+| Soul    | The Soul World: an amber sky over a calm, mirror-like sea                       | The sea stays beneath the gauntlet         |
 
 When all six are placed, every stone throws lightning skyward. A white-gold flash
 then rebuilds the universe as a new spiral galaxy, and a **Snap** button appears.
 Pressing it turns everything to dust before the scene resets.
+
+## Models
+
+The gauntlet and stones are Blender-exported GLB files in `public/models/`:
+`gauntlet.glb` (empty sockets, with `Socket_<id>` / `SocketN_<id>` marker nodes the
+site reads for stone positions) and `stones.glb` (one `<id>_core` gem per stone).
+See `src/gauntlet/modelConfig.js`. Set the URLs to `null` to use the built-in
+procedural versions.
 
 ## Controls
 
