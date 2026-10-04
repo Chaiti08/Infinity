@@ -24,13 +24,18 @@ export const MODEL_CONFIG = {
   height: 4.0,
   // Extra rotation (radians) if the model faces the wrong way: back of hand → +Z.
   rotation: [0, 0, 0],
-  // Replace the model's own materials with the built-in tinted gold.
-  // false keeps the model's baked texture and makes it metallic (see below).
-  useGoldMaterial: false,
-  // Used when useGoldMaterial is false.
-  metalness: 0.45,
+  // How the gauntlet is shaded:
+  //   'textured-gold'  real metal; the model's texture adds grime, plus
+  //                    procedural brushed streaks and scratches (default)
+  //   'gold'           the built-in procedural gold only
+  //   'original'       the model's own material, made semi-metallic
+  material: 'textured-gold',
+  tint: '#ffe0a0', // multiplied with the model's texture
+  metalness: 0.85,
   roughness: 0.5,
-  envMapIntensity: 2.2,
+  envMapIntensity: 1.0,
+  bumpScale: 0.25,
+  surfaceRepeat: 3, // how finely the brushed/scratch detail tiles
 
   // Optional manual socket overrides (normalised model space, printed by
   // ?calibrate). Anything missing is read from the model's Socket_* markers.

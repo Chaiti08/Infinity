@@ -52,13 +52,37 @@ export class Gauntlet {
       model.position.z -= c.z;
       model.position.y += -2.05 - box.min.y;
 
-      const gold = getGauntletMaterials().gold;
+      const { gold, surface } = getGauntletMaterials();
+      // ?gauntletMaterial=gold|textured-gold|original overrides the config (handy for comparing).
+      const mode = new URLSearchParams(location.search).get('gauntletMaterial') || cfg.material;
       model.traverse((o) => {
         if (!o.isMesh) return;
         o.userData.gauntletPart = true;
-        if (cfg.useGoldMaterial) o.material = gold;
-        else {
-          o.material = o.material.clone();
+        const src = o.material;
+        if (mode === 'gold') {
+          o.material = gold;
+        } else if (mode === 'textured-gold') {
+          // Real metal: the model's painted texture supplies grime and variation,
+          // the procedural surface adds brushed streaks, wear and scratches.
+          const micro = surface.clone();
+          micro.repeat.set(cfg.surfaceRepeat ?? 3, cfg.surfaceRepeat ?? 3);
+          micro.needsUpdate = true;
+          o.material = enhanceMaterial(
+            new THREE.MeshPhysicalMaterial({
+              map: src.map,
+              color: new THREE.Color(cfg.tint ?? '#ffcf7a'),
+              metalness: cfg.metalness ?? 1,
+              roughness: cfg.roughness ?? 0.38,
+              roughnessMap: micro,
+              bumpMap: micro,
+              bumpScale: cfg.bumpScale ?? 0.25,
+              clearcoat: 0.35,
+              clearcoatRoughness: 0.22,
+              envMapIntensity: cfg.envMapIntensity ?? 1.4,
+            })
+          );
+        } else {
+          o.material = src.clone();
           o.material.metalness = cfg.metalness ?? o.material.metalness;
           o.material.roughness = cfg.roughness ?? o.material.roughness;
           o.material.envMapIntensity = cfg.envMapIntensity ?? o.material.envMapIntensity;
