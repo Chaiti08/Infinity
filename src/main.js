@@ -78,6 +78,7 @@ async function boot() {
   await nextFrame();
 
   const stoneModels = await loadStoneModels();
+  gauntlet.addSocketMounts(stoneModels);
   const stones = new Stones(scene, gauntlet, quality, stage, stoneModels);
   const nebula = new Nebula(bgScene, quality);
   const stars = new Stars(scene, quality);
